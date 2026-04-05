@@ -40,19 +40,6 @@ html,body{height:100%;background:var(--paper3);color:var(--ink);font-family:'EB 
 .login-err{font-size:12px;color:var(--stage);font-family:'DM Mono',monospace;margin-top:10px;min-height:16px}
 .login-divider{text-align:center;margin:1.5rem 0 0;font-size:11px;color:var(--ink4);letter-spacing:0.06em;font-style:italic}
 
-/* ─── CONFIG ─── */
-#config-screen{position:fixed;inset:0;background:rgba(26,23,20,0.7);display:none;align-items:center;justify-content:center;z-index:190;backdrop-filter:blur(4px)}
-.config-box{width:520px;background:var(--paper);border:1px solid var(--paper4);box-shadow:0 24px 60px rgba(0,0,0,0.35);padding:2.5rem}
-.config-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--ink);margin-bottom:4px}
-.config-sub{font-size:13px;color:var(--ink3);font-style:italic;margin-bottom:1.5rem}
-textarea.firebase-cfg{width:100%;height:200px;background:var(--ink);border:1px solid var(--ink2);padding:12px;font-size:12px;color:#9fba8a;font-family:'DM Mono',monospace;resize:none;outline:none;line-height:1.7}
-textarea.firebase-cfg:focus{border-color:var(--gold)}
-.config-row{display:flex;gap:10px;margin-top:1rem}
-.btn-cfg{flex:1;border:1px solid var(--paper4);padding:10px;font-size:12px;color:var(--ink3);cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:0.06em;background:var(--paper2);transition:all 0.15s}
-.btn-cfg:hover{border-color:var(--ink3);color:var(--ink)}
-.btn-cfg.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-.btn-cfg.primary:hover{background:var(--ink2)}
-
 /* ─── APP ─── */
 #app{display:none;height:100vh;flex-direction:column}
 
@@ -239,29 +226,7 @@ textarea.firebase-cfg:focus{border-color:var(--gold)}
     <div class="field"><label class="field-label">密碼</label><input type="password" id="pass-input" placeholder="••••••••"></div>
     <button class="btn-enter" id="btn-join">進入排練室</button>
     <div class="login-err" id="login-err"></div>
-    <div class="login-divider">多人即時協作 · Firebase 驅動</div>
-  </div>
-</div>
-
-<!-- CONFIG -->
-<div id="config-screen">
-  <div class="config-box">
-    <div class="config-title">Firebase 設定</div>
-    <div class="config-sub">貼入你的 Firebase 專案設定（JSON 格式）</div>
-    <textarea class="firebase-cfg" id="firebase-cfg-input" placeholder='{
-  "apiKey": "...",
-  "authDomain": "...",
-  "databaseURL": "...",
-  "projectId": "...",
-  "storageBucket": "...",
-  "messagingSenderId": "...",
-  "appId": "..."
-}'></textarea>
-    <div class="config-row">
-      <button class="btn-cfg" id="btn-skip">Demo 模式（無需 Firebase）</button>
-      <button class="btn-cfg primary" id="btn-connect">連線 Firebase</button>
-    </div>
-    <div class="login-err" id="cfg-err"></div>
+    <div class="login-divider">多人即時協作 · Co-wrote the Script</div>
   </div>
 </div>
 
@@ -357,21 +322,9 @@ textarea.firebase-cfg:focus{border-color:var(--gold)}
     <div class="export-title">匯出備注</div>
     <div class="export-sub">選擇匯出格式，下載備注紀錄</div>
     <div class="export-opts">
-      <div class="export-opt selected" data-fmt="txt">
-        <span class="export-opt-icon">📄</span>
-        <div class="export-opt-label">純文字</div>
-        <div class="export-opt-desc">.txt 格式</div>
-      </div>
-      <div class="export-opt" data-fmt="md">
-        <span class="export-opt-icon">📝</span>
-        <div class="export-opt-label">Markdown</div>
-        <div class="export-opt-desc">.md 格式</div>
-      </div>
-      <div class="export-opt" data-fmt="csv">
-        <span class="export-opt-icon">📊</span>
-        <div class="export-opt-label">試算表</div>
-        <div class="export-opt-desc">.csv 格式</div>
-      </div>
+      <div class="export-opt selected" data-fmt="txt"><span class="export-opt-icon">📄</span><div class="export-opt-label">純文字</div><div class="export-opt-desc">.txt 格式</div></div>
+      <div class="export-opt" data-fmt="md"><span class="export-opt-icon">📝</span><div class="export-opt-label">Markdown</div><div class="export-opt-desc">.md 格式</div></div>
+      <div class="export-opt" data-fmt="csv"><span class="export-opt-icon">📊</span><div class="export-opt-label">試算表</div><div class="export-opt-desc">.csv 格式</div></div>
     </div>
     <div class="export-preview" id="export-preview"></div>
     <div class="export-btns">
@@ -384,11 +337,27 @@ textarea.firebase-cfg:focus{border-color:var(--gold)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
 <script>
+// ── Firebase config（已內建）──
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCOmt1YnOGCyWjXRoboPKvfF4yr3295cyU",
+  authDomain: "co-wrote-the-script.firebaseapp.com",
+  databaseURL: "https://co-wrote-the-script-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "co-wrote-the-script",
+  storageBucket: "co-wrote-the-script.firebasestorage.app",
+  messagingSenderId: "60454245474",
+  appId: "1:60454245474:web:44c8f8b1c0a1e0d634ed3b"
+};
+
 const TYPES={stage:{l:'舞台',e:'🎭'},light:{l:'燈光',e:'💡'},image:{l:'影像',e:'🎬'},music:{l:'音樂',e:'🎵'},dance:{l:'舞蹈',e:'💃'}};
 const COLORS=['#8b6abf','#bf7a4a','#4a8abf','#6abf8b','#bf4a8a','#8abf4a','#bf8a4a','#4abfbf'];
-let S={room:'',nick:'',pass:'',editing:false,notes:{},script:'',filter:'all',query:'',selType:'stage',selIdx:null,selText:'',db:null,demo:false,myColor:null,exportFmt:'txt'};
+let S={room:'',nick:'',pass:'',editing:false,notes:{},script:'',filter:'all',query:'',selType:'stage',selIdx:null,selText:'',db:null,myColor:null,exportFmt:'txt'};
 const $=id=>document.getElementById(id);
 
+// 自動初始化 Firebase
+if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+S.db = firebase.database();
+
+// ── LOGIN ──
 $('btn-join').onclick=()=>{
   const r=$('room-input').value.trim(),n=$('nick-input').value.trim(),p=$('pass-input').value;
   $('login-err').textContent='';
@@ -397,25 +366,15 @@ $('btn-join').onclick=()=>{
   if(!p)return $('login-err').textContent='請輸入密碼';
   S.room=r;S.nick=n;S.pass=p;
   S.myColor=COLORS[Math.abs(n.split('').reduce((a,c)=>a+c.charCodeAt(0),0))%COLORS.length];
-  $('login-screen').style.display='none';$('config-screen').style.display='flex';
+  launch();
 };
 $('pass-input').onkeydown=e=>{if(e.key==='Enter')$('btn-join').click()};
 
-$('btn-connect').onclick=()=>{
-  let cfg;$('cfg-err').textContent='';
-  try{cfg=JSON.parse($('firebase-cfg-input').value.trim())}catch{$('cfg-err').textContent='JSON 格式錯誤';return}
-  if(!cfg.databaseURL){$('cfg-err').textContent='缺少 databaseURL';return}
-  try{if(!firebase.apps.length)firebase.initializeApp(cfg);S.db=firebase.database();S.demo=false;launch()}
-  catch(e){$('cfg-err').textContent='連線失敗：'+e.message}
-};
-$('btn-skip').onclick=()=>{S.demo=true;launch()};
-
 function launch(){
-  $('config-screen').style.display='none';
+  $('login-screen').style.display='none';
   const app=$('app');app.style.display='flex';app.style.flexDirection='column';
   $('room-label').textContent=S.room;
-  if(S.demo){$('sync-pip').classList.add('off');$('sync-txt').textContent='Demo';renderAvatars([{nick:S.nick,color:S.myColor}])}
-  else connectFB();
+  connectFB();
 }
 
 function connectFB(){
@@ -423,23 +382,37 @@ function connectFB(){
   S.db.ref(base+'/password').once('value',snap=>{
     const stored=snap.val();
     if(stored===null)S.db.ref(base+'/password').set(S.pass);
-    else if(stored!==S.pass){$('app').style.display='none';$('login-screen').style.display='flex';$('login-err').textContent='密碼錯誤';return}
+    else if(stored!==S.pass){
+      $('app').style.display='none';
+      $('login-screen').style.display='flex';
+      $('login-err').textContent='密碼錯誤';return;
+    }
     const uRef=S.db.ref(base+'/users/'+S.nick);
-    uRef.set({nick:S.nick,color:S.myColor,ts:Date.now()});uRef.onDisconnect().remove();
+    uRef.set({nick:S.nick,color:S.myColor,ts:Date.now()});
+    uRef.onDisconnect().remove();
     S.db.ref(base+'/users').on('value',s=>renderAvatars(Object.values(s.val()||{})));
-    S.db.ref(base+'/script').on('value',s=>{const v=s.val()||'';if(v!==S.script){S.script=v;if(!S.editing)renderScript(v);else $('script-edit').value=v}});
-    S.db.ref(base+'/notes').on('value',s=>{S.notes=s.val()||{};renderNotes();renderScript(S.script)});
+    S.db.ref(base+'/script').on('value',s=>{
+      const v=s.val()||'';if(v!==S.script){S.script=v;if(!S.editing)renderScript(v);else $('script-edit').value=v}
+    });
+    S.db.ref(base+'/notes').on('value',s=>{
+      S.notes=s.val()||{};renderNotes();renderScript(S.script);
+    });
   });
 }
 
-function dbSet(p,v){if(!S.demo)S.db.ref('rooms/'+S.room+'/'+p).set(v)}
-function dbPush(p,v){if(S.demo){const k='d_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);S.notes[k]=v;renderNotes();renderScript(S.script);return}S.db.ref('rooms/'+S.room+'/'+p).push(v)}
-function dbUpd(p,v){if(S.demo){const k=p.split('/').pop();if(S.notes[k])Object.assign(S.notes[k],v),renderNotes(),renderScript(S.script);return}S.db.ref('rooms/'+S.room+'/'+p).update(v)}
-function dbDel(k){if(S.demo){delete S.notes[k];renderNotes();renderScript(S.script);return}S.db.ref('rooms/'+S.room+'/notes/'+k).remove()}
+function dbSet(p,v){S.db.ref('rooms/'+S.room+'/'+p).set(v)}
+function dbPush(p,v){S.db.ref('rooms/'+S.room+'/'+p).push(v)}
+function dbUpd(p,v){S.db.ref('rooms/'+S.room+'/'+p).update(v)}
+function dbDel(k){S.db.ref('rooms/'+S.room+'/notes/'+k).remove()}
 
 function renderAvatars(users){
   const el=$('avatars');el.innerHTML='';
-  users.slice(0,7).forEach(u=>{const d=document.createElement('div');d.className='avatar';d.style.background=u.color||'#888';d.title=u.nick;d.textContent=(u.nick||'?').slice(0,2).toUpperCase();el.appendChild(d)});
+  users.slice(0,7).forEach(u=>{
+    const d=document.createElement('div');
+    d.className='avatar';d.style.background=u.color||'#888';
+    d.title=u.nick;d.textContent=(u.nick||'?').slice(0,2).toUpperCase();
+    el.appendChild(d);
+  });
 }
 
 $('btn-edit').onclick=()=>{
@@ -521,11 +494,7 @@ function buildExport(fmt){
     return out;
   }
   let out=`劇本備注匯出\n房間：${S.room}\n匯出時間：${new Date().toLocaleString('zh-Hant')}\n${'═'.repeat(40)}\n\n`;
-  notes.forEach(n=>{
-    out+=`【第 ${n.lineIdx+1} 行】${tl(n)} ─ ${n.author||'匿名'} ${ts(n)}\n`;
-    if(n.lineText)out+=`  台詞：${n.lineText}\n`;
-    out+=`  備注：${n.text}\n\n`;
-  });
+  notes.forEach(n=>{out+=`【第 ${n.lineIdx+1} 行】${tl(n)} ─ ${n.author||'匿名'} ${ts(n)}\n`;if(n.lineText)out+=`  台詞：${n.lineText}\n`;out+=`  備注：${n.text}\n\n`});
   return out;
 }
 function updateExportPreview(){$('export-preview').textContent=buildExport(S.exportFmt)}
@@ -597,7 +566,7 @@ function renderNotes(){
     card.querySelector('.edit-btn').onclick=()=>{const open=editArea.style.display==='block';editArea.style.display=open?'none':'block';dispText.style.display=open?'block':'none';if(!open){etArea.value=note.text;eType=note.type;setTimeout(()=>etArea.focus(),40)}};
     card.querySelector('.cancel-btn').onclick=()=>{editArea.style.display='none';dispText.style.display='block'};
     card.querySelectorAll('.et-btn').forEach(b=>{b.onclick=()=>{eType=b.dataset.t;card.querySelectorAll('.et-btn').forEach(x=>x.className='et-btn'+(x.dataset.t===eType?' s-'+eType:''))}});
-    card.querySelector('.save-btn').onclick=()=>{const txt=etArea.value.trim();if(!txt)return;dbUpd('notes/'+note.key,{text:txt,type:eType,editedTs:Date.now()});if(S.demo){editArea.style.display='none';dispText.style.display='block'}};
+    card.querySelector('.save-btn').onclick=()=>{const txt=etArea.value.trim();if(!txt)return;dbUpd('notes/'+note.key,{text:txt,type:eType,editedTs:Date.now()});editArea.style.display='none';dispText.style.display='block'};
     card.querySelector('.del-btn').onclick=()=>dbDel(note.key);
     body.appendChild(card);
   });
