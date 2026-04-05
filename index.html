@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>劇本檢閱系統 · Script Review Studio</title>
+<title>共編劇本筆記 · Script Review Studio</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -77,7 +77,7 @@ html,body{height:100%;background:var(--paper3);color:var(--ink);font-family:'EB 
 .btn-edit-mode:hover{border-color:var(--ink3);color:var(--ink)}
 .btn-edit-mode.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .script-area{flex:1;position:relative;overflow:hidden}
-#script-edit{display:none;width:100%;height:100%;background:var(--linen);border:none;outline:none;padding:2.5rem 3rem;font-size:16px;line-height:2.1;color:var(--ink);font-family:'EB Garamond',serif;resize:none}
+#script-edit{display:none;width:100%;height:100%;background:var(--linen);border:none;outline:none;padding:2.5rem 3rem;font-size:16px;line-height:2.1;color:var(--ink);font-family:'EB Garamond',serif;resize:none;tab-size:2}
 #script-view{width:100%;height:100%;overflow-y:auto;padding:2.5rem 1.5rem 2.5rem 1rem}
 #script-view::-webkit-scrollbar{width:6px}
 #script-view::-webkit-scrollbar-thumb{background:var(--paper4)}
@@ -86,7 +86,7 @@ html,body{height:100%;background:var(--paper3);color:var(--ink);font-family:'EB 
 .script-line.has-note{border-left-color:var(--gold)}
 .script-line.hl{background:rgba(184,149,42,0.14)!important;border-left-color:var(--gold)!important}
 .line-num{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink5);min-width:36px;user-select:none;padding-top:2px;flex-shrink:0}
-.line-text{font-size:16px;line-height:2.1;color:var(--ink);flex:1;font-family:'EB Garamond',serif}
+.line-text{font-size:var(--sf,16px);line-height:var(--slh,2.1);color:var(--ink);flex:1;font-family:'EB Garamond',serif}
 .add-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:20px;height:20px;background:var(--ink);color:var(--paper);border:none;cursor:pointer;font-size:14px;display:none;align-items:center;justify-content:center;line-height:1;opacity:0.7;transition:opacity 0.1s}
 .script-line:hover .add-btn{display:flex}
 .add-btn:hover{opacity:1}
@@ -175,8 +175,9 @@ html,body{height:100%;background:var(--paper3);color:var(--ink);font-family:'EB 
 .modal-inner::before{content:'';display:block;height:2px;margin:-2rem -2rem 1.5rem;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
 .modal-title{font-family:'Playfair Display',serif;font-size:18px;color:var(--ink);margin-bottom:1rem}
 .modal-ref{background:var(--paper2);border-left:3px solid var(--gold);padding:8px 12px;font-size:13px;color:var(--ink3);font-style:italic;font-family:'EB Garamond',serif;margin-bottom:1.25rem;line-height:1.5}
-.modal-types{display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap}
-.mtype-btn{flex:1;padding:9px 6px;border:1px solid var(--paper4);background:var(--paper2);font-size:11px;color:var(--ink4);cursor:pointer;font-family:'DM Mono',monospace;text-align:center;transition:all 0.12s;min-width:60px;letter-spacing:0.03em}
+.modal-types{display:flex;gap:5px;margin-bottom:1rem;overflow-x:auto;padding-bottom:2px}
+.modal-types::-webkit-scrollbar{display:none}
+.mtype-btn{flex:0 0 auto;padding:8px 12px;border:1px solid var(--paper4);background:var(--paper2);font-size:12px;color:var(--ink4);cursor:pointer;font-family:'DM Mono',monospace;text-align:center;transition:all 0.12s;white-space:nowrap;letter-spacing:0.03em}
 .mtype-btn.s-stage{background:var(--stage-l);border-color:var(--stage);color:var(--stage)}
 .mtype-btn.s-light{background:var(--light-l);border-color:var(--light);color:var(--light)}
 .mtype-btn.s-image{background:var(--image-l);border-color:var(--image);color:var(--image)}
@@ -207,6 +208,50 @@ html,body{height:100%;background:var(--paper3);color:var(--ink);font-family:'EB 
 .export-preview{background:var(--linen);border:1px solid var(--paper4);padding:12px;font-family:'DM Mono',monospace;font-size:11px;color:var(--ink3);line-height:1.7;height:120px;overflow-y:auto;margin-bottom:1.25rem;white-space:pre-wrap}
 .export-btns{display:flex;gap:8px}
 .no-notes{text-align:center;padding:3rem 1rem;font-size:14px;color:var(--ink4);font-style:italic;font-family:'EB Garamond',serif;line-height:1.8}
+
+/* ─── SCRIPT FORMAT STYLES ─── */
+/* 行級：場景標題 */
+.script-line.ln-heading .line-text{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--gold);letter-spacing:0.04em;padding-bottom:2px;border-bottom:1px solid rgba(184,149,42,0.3)}
+.script-line.ln-heading{padding-top:10px;padding-bottom:6px;margin-top:4px}
+/* 行級：幕次副標 */
+.script-line.ln-subheading .line-text{font-family:'Playfair Display',serif;font-size:15px;font-weight:600;color:var(--ink2);letter-spacing:0.03em}
+.script-line.ln-subheading{padding-top:6px}
+/* 行級：角色名稱 */
+.script-line.ln-char .line-text{font-weight:600;color:var(--stage);letter-spacing:0.06em;font-size:14px;font-family:'DM Mono',monospace}
+/* 行級：整行舞台指示 */
+.script-line.ln-direction .line-text{font-style:italic;color:var(--ink4);font-size:14px;padding-left:8px}
+/* 行內格式 */
+.fmt-b{font-weight:700}
+.fmt-i{font-style:italic}
+.fmt-u{text-decoration:underline;text-underline-offset:2px}
+.fmt-dir{font-style:italic;color:var(--ink3);font-size:0.92em}
+/* ─── EDIT TOOLBAR ─── */
+#fmt-toolbar{display:none;padding:5px 12px;background:var(--paper2);border-bottom:1px solid var(--paper4);gap:4px;flex-wrap:wrap;align-items:center;flex-shrink:0}
+.fmt-btn{background:var(--paper);border:1px solid var(--paper4);padding:3px 9px;font-size:12px;color:var(--ink3);cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:0.04em;transition:all 0.12s;line-height:1.6}
+.fmt-btn:hover{border-color:var(--ink3);color:var(--ink)}
+.fmt-btn.fmt-b-btn{font-weight:700}
+.fmt-btn.fmt-i-btn{font-style:italic}
+.fmt-btn.fmt-u-btn{text-decoration:underline;text-underline-offset:2px}
+.fmt-sep{width:1px;height:18px;background:var(--paper4);margin:0 2px}
+.fmt-hint{font-size:10px;color:var(--ink5);font-family:'DM Mono',monospace;margin-left:auto;font-style:italic}
+
+/* ─── EDITING BANNER ─── */
+#editing-banner{display:none;padding:6px 16px;background:rgba(192,82,10,0.08);border-bottom:1px solid rgba(192,82,10,0.18);flex-shrink:0;gap:8px;align-items:center;flex-wrap:wrap}
+.editing-avatar{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--stage);font-family:'DM Mono',monospace}
+.editing-dot{width:6px;height:6px;border-radius:50%;animation:pip 1.2s ease-in-out infinite;flex-shrink:0}
+.editing-label{font-size:11px;color:var(--stage);font-family:'DM Mono',monospace;font-style:italic}
+
+/* ─── SORT SELECT ─── */
+.sort-select{margin-left:4px;background:var(--linen);border:1px solid var(--paper4);padding:2px 6px;font-size:10px;color:var(--ink3);font-family:'DM Mono',monospace;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;padding-right:16px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23a09890'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 5px center}
+.sort-select:focus{border-color:var(--gold)}
+
+/* ─── VIEW CONTROLS (font size / line height) ─── */
+.view-controls{display:flex;align-items:center;gap:3px;margin-left:auto}
+.vc-btn{background:transparent;border:1px solid var(--paper4);padding:3px 7px;font-size:11px;color:var(--ink4);cursor:pointer;font-family:'DM Mono',monospace;transition:all 0.12s;line-height:1.4;user-select:none}
+.vc-btn:hover{border-color:var(--ink3);color:var(--ink)}
+.vc-btn:disabled{opacity:0.35;cursor:default}
+.vc-sep{width:1px;height:14px;background:var(--paper4);margin:0 3px}
+.panel-head .btn-edit-mode{margin-left:8px}
 </style>
 </head>
 <body>
@@ -218,7 +263,7 @@ html,body{height:100%;background:var(--paper3);color:var(--ink);font-family:'EB 
   <div class="login-box">
     <div class="login-mark">
       <span class="login-mark-icon">🎭</span>
-      <span class="login-title">劇本檢閱系統</span>
+      <span class="login-title">共編劇本筆記</span>
       <span class="login-sub">Script Review Studio</span>
     </div>
     <div class="field"><label class="field-label">房間代碼</label><input type="text" id="room-input" placeholder="輸入房間代碼" autocomplete="off"></div>
@@ -257,7 +302,27 @@ html,body{height:100%;background:var(--paper3);color:var(--ink);font-family:'EB 
       <div class="panel-head">
         <span class="panel-label">劇本</span>
         <span class="script-count" id="line-count"></span>
+        <div class="view-controls">
+          <button class="vc-btn" id="vc-fs-down" title="縮小字型">A−</button>
+          <button class="vc-btn" id="vc-fs-up" title="放大字型">A+</button>
+          <div class="vc-sep"></div>
+          <button class="vc-btn" id="vc-lh-down" title="縮小行距">↕−</button>
+          <button class="vc-btn" id="vc-lh-up" title="放大行距">↕+</button>
+        </div>
         <button class="btn-edit-mode" id="btn-edit">編輯模式</button>
+      </div>
+      <div id="editing-banner"></div>
+      <div id="fmt-toolbar">
+        <button class="fmt-btn fmt-b-btn" id="fmt-bold" title="粗體 **文字**">B</button>
+        <button class="fmt-btn fmt-i-btn" id="fmt-italic" title="斜體 *文字*">I</button>
+        <button class="fmt-btn fmt-u-btn" id="fmt-underline" title="底線 __文字__">U</button>
+        <div class="fmt-sep"></div>
+        <button class="fmt-btn" id="fmt-h1" title="場景標題：行首加 # "># 場景</button>
+        <button class="fmt-btn" id="fmt-h2" title="幕次：行首加 ## ">## 幕次</button>
+        <div class="fmt-sep"></div>
+        <button class="fmt-btn" id="fmt-char" title="角色名稱：行尾加全形冒號">角色：</button>
+        <button class="fmt-btn" id="fmt-dir" title="舞台指示：以（ ）包裹">（指示）</button>
+        <span class="fmt-hint">選取文字後點擊套用</span>
       </div>
       <div class="script-area">
         <textarea id="script-edit" placeholder="在此貼入劇本內容…&#10;每一行將成為可標注的單位。"></textarea>
@@ -273,6 +338,11 @@ html,body{height:100%;background:var(--paper3);color:var(--ink);font-family:'EB 
       <div class="notes-head">
         <span class="panel-label">備注</span>
         <span class="notes-count" id="notes-count">0 則</span>
+        <select class="sort-select" id="sort-select" title="排序方式">
+          <option value="line">行號</option>
+          <option value="newest">最新</option>
+          <option value="author">作者</option>
+        </select>
       </div>
       <div class="search-bar">
         <span class="search-icon">🔍</span>
@@ -350,8 +420,18 @@ const FIREBASE_CONFIG = {
 
 const TYPES={stage:{l:'舞台',e:'🎭'},light:{l:'燈光',e:'💡'},image:{l:'影像',e:'🎬'},music:{l:'音樂',e:'🎵'},dance:{l:'舞蹈',e:'💃'}};
 const COLORS=['#8b6abf','#bf7a4a','#4a8abf','#6abf8b','#bf4a8a','#8abf4a','#bf8a4a','#4abfbf'];
-let S={room:'',nick:'',pass:'',editing:false,notes:{},script:'',filter:'all',query:'',selType:'stage',selIdx:null,selText:'',db:null,myColor:null,exportFmt:'txt'};
+let S={room:'',nick:'',pass:'',editing:false,notes:{},script:'',filter:'all',query:'',selType:'stage',selIdx:null,selText:'',db:null,myColor:null,exportFmt:'txt',sort:'line'};
 const $=id=>document.getElementById(id);
+
+// ── LOCALSTORAGE 登入記憶 ──
+(()=>{
+  const r=localStorage.getItem('coscript_room'),n=localStorage.getItem('coscript_nick'),p=localStorage.getItem('coscript_pass');
+  if(r)$('room-input').value=r;
+  if(n)$('nick-input').value=n;
+  if(p)$('pass-input').value=p;
+  const lt=localStorage.getItem('coscript_lasttype');
+  if(lt&&['stage','light','image','music','dance'].includes(lt))S.selType=lt;
+})();
 
 // 自動初始化 Firebase
 if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
@@ -371,6 +451,9 @@ $('btn-join').onclick=()=>{
 $('pass-input').onkeydown=e=>{if(e.key==='Enter')$('btn-join').click()};
 
 function launch(){
+  localStorage.setItem('coscript_room',S.room);
+  localStorage.setItem('coscript_nick',S.nick);
+  localStorage.setItem('coscript_pass',S.pass);
   $('login-screen').style.display='none';
   const app=$('app');app.style.display='flex';app.style.flexDirection='column';
   $('room-label').textContent=S.room;
@@ -417,9 +500,95 @@ function renderAvatars(users){
 
 $('btn-edit').onclick=()=>{
   S.editing=!S.editing;const btn=$('btn-edit');
-  if(S.editing){btn.textContent='完成編輯';btn.classList.add('active');$('script-edit').style.display='block';$('script-view').style.display='none';$('script-edit').value=S.script;$('script-edit').focus()}
-  else{btn.textContent='編輯模式';btn.classList.remove('active');$('script-edit').style.display='none';$('script-view').style.display='block';S.script=$('script-edit').value;renderScript(S.script);dbSet('script',S.script)}
+  if(S.editing){btn.textContent='完成編輯';btn.classList.add('active');$('script-edit').style.display='block';$('script-view').style.display='none';$('fmt-toolbar').style.display='flex';$('script-edit').value=S.script;$('script-edit').focus()}
+  else{btn.textContent='編輯模式';btn.classList.remove('active');$('script-edit').style.display='none';$('script-view').style.display='block';$('fmt-toolbar').style.display='none';S.script=$('script-edit').value;renderScript(S.script);dbSet('script',S.script)}
 };
+
+// ── FORMAT TOOLBAR ──
+function wrapSelection(before,after){
+  const ta=$('script-edit');
+  const s=ta.selectionStart,e=ta.selectionEnd,v=ta.value;
+  const sel=v.slice(s,e);
+  // toggle: if already wrapped, unwrap
+  if(sel.startsWith(before)&&sel.endsWith(after)){
+    const inner=sel.slice(before.length,sel.length-after.length);
+    ta.value=v.slice(0,s)+inner+v.slice(e);
+    ta.setSelectionRange(s,s+inner.length);
+  } else {
+    const rep=before+sel+after;
+    ta.value=v.slice(0,s)+rep+v.slice(e);
+    ta.setSelectionRange(s,s+rep.length);
+  }
+  ta.focus();
+}
+function toggleLinePrefix(prefix){
+  const ta=$('script-edit');
+  const s=ta.selectionStart,v=ta.value;
+  const lineStart=v.lastIndexOf('\n',s-1)+1;
+  const lineEnd=v.indexOf('\n',s);
+  const end=lineEnd===-1?v.length:lineEnd;
+  const line=v.slice(lineStart,end);
+  let newLine;
+  if(line.startsWith(prefix)){newLine=line.slice(prefix.length)}
+  else{
+    // remove other heading prefixes first
+    newLine=prefix+line.replace(/^#{1,2}\s/,'');
+  }
+  ta.value=v.slice(0,lineStart)+newLine+v.slice(end);
+  ta.setSelectionRange(lineStart+prefix.length,lineStart+prefix.length);
+  ta.focus();
+}
+function wrapLineParens(){
+  const ta=$('script-edit');
+  const s=ta.selectionStart,e=ta.selectionEnd,v=ta.value;
+  const sel=v.slice(s,e).trim();
+  if(!sel)return;
+  const rep='（'+sel+'）';
+  ta.value=v.slice(0,s)+rep+v.slice(e);
+  ta.setSelectionRange(s,s+rep.length);
+  ta.focus();
+}
+function appendCharColon(){
+  const ta=$('script-edit');
+  const s=ta.selectionStart,v=ta.value;
+  const lineStart=v.lastIndexOf('\n',s-1)+1;
+  const lineEnd=v.indexOf('\n',s);
+  const end=lineEnd===-1?v.length:lineEnd;
+  const line=v.slice(lineStart,end);
+  if(line.endsWith('：'))return;
+  const newLine=line.replace(/[:：]$/,'')+('：');
+  ta.value=v.slice(0,lineStart)+newLine+v.slice(end);
+  ta.setSelectionRange(lineStart+newLine.length,lineStart+newLine.length);
+  ta.focus();
+}
+$('fmt-bold').onclick=()=>wrapSelection('**','**');
+$('fmt-italic').onclick=()=>wrapSelection('*','*');
+$('fmt-underline').onclick=()=>wrapSelection('__','__');
+$('fmt-h1').onclick=()=>toggleLinePrefix('# ');
+$('fmt-h2').onclick=()=>toggleLinePrefix('## ');
+$('fmt-char').onclick=()=>appendCharColon();
+$('fmt-dir').onclick=()=>wrapLineParens();
+
+function formatLine(raw){
+  // 1. detect line-level class from prefix/pattern
+  let lineClass='',src=raw;
+  if(/^##\s/.test(src)){lineClass='ln-subheading';src=src.slice(3)}
+  else if(/^#\s/.test(src)){lineClass='ln-heading';src=src.slice(2)}
+  else if(/^（[\s\S]+）$/.test(src.trim())||/^\([\s\S]+\)$/.test(src.trim())){lineClass='ln-direction'}
+  else if(/^.{1,20}[：:]$/.test(src.trim())){lineClass='ln-char'}
+  // 2. escape base text
+  let h=esc(src);
+  // 3. inline markup (applied after escaping, so markers are literal ASCII)
+  h=h.replace(/\*\*(.+?)\*\*/g,'<span class="fmt-b">$1</span>');
+  h=h.replace(/\*(.+?)\*/g,'<span class="fmt-i">$1</span>');
+  h=h.replace(/__(.+?)__/g,'<span class="fmt-u">$1</span>');
+  // 4. inline parenthetical stage directions (not whole-line ones)
+  if(lineClass!=='ln-direction'){
+    h=h.replace(/（([^）]+)）/g,'<span class="fmt-dir">（$1）</span>');
+    h=h.replace(/\(([^)]+)\)/g,'<span class="fmt-dir">($1)</span>');
+  }
+  return{html:h||'&nbsp;',lineClass};
+}
 
 function renderScript(text){
   const view=$('script-view');view.innerHTML='';
@@ -429,10 +598,11 @@ function renderScript(text){
   const lines=text.split('\n');
   $('line-count').textContent=lines.length+' 行';
   lines.forEach((line,i)=>{
+    const{html,lineClass}=formatLine(line);
     const row=document.createElement('div');
-    row.className='script-line'+(byLine[i]?' has-note':'');
+    row.className='script-line'+(lineClass?' '+lineClass:'')+(byLine[i]?' has-note':'');
     row.dataset.lineIdx=i;
-    row.innerHTML=`<span class="line-num">${i+1}</span><span class="line-text">${esc(line)||'&nbsp;'}</span>`;
+    row.innerHTML=`<span class="line-num">${i+1}</span><span class="line-text">${html}</span>`;
     const btn=document.createElement('button');btn.className='add-btn';btn.innerHTML='+';btn.title='新增備注';
     btn.onclick=e=>{e.stopPropagation();openModal(i,line)};
     row.appendChild(btn);view.appendChild(row);
@@ -573,6 +743,50 @@ function renderNotes(){
 }
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// ── TAB INDENT ──
+$('script-edit').addEventListener('keydown',e=>{
+  if(e.key!=='Tab')return;
+  e.preventDefault();
+  const ta=e.target,s=ta.selectionStart,end=ta.selectionEnd,v=ta.value;
+  if(!e.shiftKey){
+    // indent: insert 2 spaces
+    ta.value=v.slice(0,s)+'  '+v.slice(end);
+    ta.setSelectionRange(s+2,s+2);
+  } else {
+    // unindent: remove up to 2 leading spaces from current line
+    const lineStart=v.lastIndexOf('\n',s-1)+1;
+    const line=v.slice(lineStart,end===-1?v.length:v.indexOf('\n',s)===-1?v.length:v.indexOf('\n',s));
+    const stripped=line.replace(/^ {1,2}/,'');
+    const removed=line.length-stripped.length;
+    if(removed>0){
+      ta.value=v.slice(0,lineStart)+stripped+v.slice(lineStart+line.length);
+      ta.setSelectionRange(Math.max(lineStart,s-removed),Math.max(lineStart,s-removed));
+    }
+  }
+});
+
+// ── FONT SIZE & LINE HEIGHT ──
+S.fontSize=16;S.lineHeight=2.1;
+const FS_MIN=12,FS_MAX=26,LH_MIN=1.4,LH_MAX=3.2;
+function applyTypo(){
+  const view=$('script-view'),edit=$('script-edit');
+  view.style.setProperty('--sf',S.fontSize+'px');
+  view.style.setProperty('--slh',S.lineHeight);
+  edit.style.fontSize=S.fontSize+'px';
+  edit.style.lineHeight=S.lineHeight;
+  // update disabled state
+  $('vc-fs-down').disabled=S.fontSize<=FS_MIN;
+  $('vc-fs-up').disabled=S.fontSize>=FS_MAX;
+  $('vc-lh-down').disabled=S.lineHeight<=LH_MIN;
+  $('vc-lh-up').disabled=S.lineHeight>=LH_MAX;
+}
+$('vc-fs-down').onclick=()=>{if(S.fontSize>FS_MIN){S.fontSize=Math.max(FS_MIN,S.fontSize-1);applyTypo()}};
+$('vc-fs-up').onclick=()=>{if(S.fontSize<FS_MAX){S.fontSize=Math.min(FS_MAX,S.fontSize+1);applyTypo()}};
+$('vc-lh-down').onclick=()=>{if(S.lineHeight>LH_MIN){S.lineHeight=Math.round((S.lineHeight-0.2)*10)/10;applyTypo()}};
+$('vc-lh-up').onclick=()=>{if(S.lineHeight<LH_MAX){S.lineHeight=Math.round((S.lineHeight+0.2)*10)/10;applyTypo()}};
+applyTypo();
+
 renderNotes();
 </script>
 </body>
