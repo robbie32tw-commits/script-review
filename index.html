@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>劇本檢閱系統 · Script Review Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1a1714;--ink2:#3d3830;--ink3:#6b6358;--ink4:#a09890;--ink5:#c8c0b8;
+  --paper:#f5f0e8;--paper2:#ede8de;--paper3:#e4ddd2;--paper4:#d8d0c4;--linen:#f9f6f0;
+  --stage:#c0520a;--stage-l:#fdf0e8;
+  --light:#8a7200;--light-l:#fdf8e1;
+  --image:#0a5c8a;--image-l:#e4f2fb;
+  --music:#6b2fa0;--music-l:#f3eafb;
+  --dance:#a02060;--dance-l:#fbeaf2;
+  --gold:#b8952a;--shadow:rgba(26,23,20,0.12);--shadow2:rgba(26,23,20,0.06);
+}
+html,body{height:100%;background:var(--paper3);color:var(--ink);font-family:'EB Garamond',Georgia,serif;overflow:hidden}
+
+/* ─── LOGIN ─── */
+#login-screen{position:fixed;inset:0;background:var(--ink);display:flex;align-items:center;justify-content:center;z-index:200}
+.login-stage{position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 30%,rgba(184,149,42,0.08) 0%,transparent 70%);pointer-events:none}
+.login-lines{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.login-lines::before,.login-lines::after{content:'';position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(184,149,42,0.15),transparent)}
+.login-lines::before{top:30%}.login-lines::after{top:70%}
+.login-box{position:relative;width:400px;background:var(--paper);border:1px solid var(--paper4);box-shadow:0 32px 80px rgba(0,0,0,0.5),0 0 0 1px rgba(184,149,42,0.1);padding:3rem 2.5rem 2.5rem}
+.login-box::before{content:'';position:absolute;top:0;left:2.5rem;right:2.5rem;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.login-mark{text-align:center;margin-bottom:2rem}
+.login-mark-icon{font-size:28px;display:block;margin-bottom:10px}
+.login-title{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--ink);letter-spacing:0.02em;display:block;margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--ink3);letter-spacing:0.08em;font-style:italic}
+.field{margin-bottom:1.25rem}
+.field-label{display:block;font-size:11px;color:var(--ink3);letter-spacing:0.12em;text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:6px}
+.field input{width:100%;background:var(--linen);border:1px solid var(--paper4);padding:10px 14px;font-size:15px;color:var(--ink);font-family:'EB Garamond',serif;outline:none;transition:border-color 0.2s,box-shadow 0.2s}
+.field input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(184,149,42,0.12)}
+.btn-enter{width:100%;background:var(--ink);border:none;padding:13px;font-size:14px;font-weight:500;color:var(--paper);cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;transition:background 0.2s;margin-top:0.5rem}
+.btn-enter:hover{background:var(--ink2)}
+.login-err{font-size:12px;color:var(--stage);font-family:'DM Mono',monospace;margin-top:10px;min-height:16px}
+.login-divider{text-align:center;margin:1.5rem 0 0;font-size:11px;color:var(--ink4);letter-spacing:0.06em;font-style:italic}
+
+/* ─── CONFIG ─── */
+#config-screen{position:fixed;inset:0;background:rgba(26,23,20,0.7);display:none;align-items:center;justify-content:center;z-index:190;backdrop-filter:blur(4px)}
+.config-box{width:520px;background:var(--paper);border:1px solid var(--paper4);box-shadow:0 24px 60px rgba(0,0,0,0.35);padding:2.5rem}
+.config-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--ink);margin-bottom:4px}
+.config-sub{font-size:13px;color:var(--ink3);font-style:italic;margin-bottom:1.5rem}
+textarea.firebase-cfg{width:100%;height:200px;background:var(--ink);border:1px solid var(--ink2);padding:12px;font-size:12px;color:#9fba8a;font-family:'DM Mono',monospace;resize:none;outline:none;line-height:1.7}
+textarea.firebase-cfg:focus{border-color:var(--gold)}
+.config-row{display:flex;gap:10px;margin-top:1rem}
+.btn-cfg{flex:1;border:1px solid var(--paper4);padding:10px;font-size:12px;color:var(--ink3);cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:0.06em;background:var(--paper2);transition:all 0.15s}
+.btn-cfg:hover{border-color:var(--ink3);color:var(--ink)}
+.btn-cfg.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn-cfg.primary:hover{background:var(--ink2)}
+
+/* ─── APP ─── */
+#app{display:none;height:100vh;flex-direction:column}
+
+/* ─── TOPBAR ─── */
+.topbar{height:52px;background:var(--ink);border-bottom:1px solid rgba(184,149,42,0.2);display:flex;align-items:center;padding:0 1.25rem;gap:1rem;flex-shrink:0}
+.topbar-logo{display:flex;align-items:center;gap:8px}
+.topbar-logo-icon{font-size:18px;opacity:0.9}
+.topbar-logo-text{font-family:'Playfair Display',serif;font-size:16px;color:var(--paper);letter-spacing:0.02em}
+.topbar-sep{width:1px;height:20px;background:rgba(255,255,255,0.1)}
+.room-pill{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);padding:4px 10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--ink5);letter-spacing:0.06em}
+.room-pill-dot{width:5px;height:5px;background:var(--gold);border-radius:50%}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.online-wrap{display:flex;align-items:center;gap:8px}
+.online-label{font-size:11px;color:var(--ink4);font-family:'DM Mono',monospace}
+.avatars{display:flex}
+.avatar{width:26px;height:26px;border-radius:50%;border:2px solid var(--ink);display:flex;align-items:center;justify-content:center;font-size:9px;font-family:'DM Mono',monospace;font-weight:500;color:#fff;margin-left:-4px;transition:transform 0.15s;cursor:default}
+.avatar:first-child{margin-left:0}
+.avatar:hover{transform:translateY(-2px);z-index:10}
+.sync-badge{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--ink4);font-family:'DM Mono',monospace}
+.sync-pip{width:5px;height:5px;border-radius:50%;background:#5a9e6a;animation:pip 2.5s ease-in-out infinite}
+@keyframes pip{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.8)}}
+.sync-pip.off{background:#c06060;animation:none}
+.btn-export{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);padding:5px 12px;font-size:10px;color:var(--ink5);cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:0.08em;transition:all 0.15s}
+.btn-export:hover{background:rgba(255,255,255,0.12);color:var(--paper)}
+
+/* ─── MAIN ─── */
+.main{display:flex;flex:1;overflow:hidden}
+
+/* ─── SCRIPT PANEL ─── */
+.script-panel{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--linen);border-right:1px solid var(--paper4)}
+.panel-head{padding:10px 20px;border-bottom:1px solid var(--paper4);display:flex;align-items:center;gap:10px;flex-shrink:0;background:var(--paper)}
+.panel-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink4);letter-spacing:0.12em;text-transform:uppercase}
+.script-count{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink5)}
+.btn-edit-mode{margin-left:auto;background:transparent;border:1px solid var(--paper4);padding:5px 12px;font-size:11px;color:var(--ink3);cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:0.06em;transition:all 0.15s}
+.btn-edit-mode:hover{border-color:var(--ink3);color:var(--ink)}
+.btn-edit-mode.active{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.script-area{flex:1;position:relative;overflow:hidden}
+#script-edit{display:none;width:100%;height:100%;background:var(--linen);border:none;outline:none;padding:2.5rem 3rem;font-size:16px;line-height:2.1;color:var(--ink);font-family:'EB Garamond',serif;resize:none}
+#script-view{width:100%;height:100%;overflow-y:auto;padding:2.5rem 1.5rem 2.5rem 1rem}
+#script-view::-webkit-scrollbar{width:6px}
+#script-view::-webkit-scrollbar-thumb{background:var(--paper4)}
+.script-line{position:relative;display:flex;align-items:baseline;gap:0;padding:1px 2rem 1px 0.5rem;border-left:3px solid transparent;transition:border-color 0.15s,background 0.15s;cursor:default}
+.script-line:hover{background:rgba(184,149,42,0.05);border-left-color:rgba(184,149,42,0.3)}
+.script-line.has-note{border-left-color:var(--gold)}
+.script-line.hl{background:rgba(184,149,42,0.14)!important;border-left-color:var(--gold)!important}
+.line-num{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink5);min-width:36px;user-select:none;padding-top:2px;flex-shrink:0}
+.line-text{font-size:16px;line-height:2.1;color:var(--ink);flex:1;font-family:'EB Garamond',serif}
+.add-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:20px;height:20px;background:var(--ink);color:var(--paper);border:none;cursor:pointer;font-size:14px;display:none;align-items:center;justify-content:center;line-height:1;opacity:0.7;transition:opacity 0.1s}
+.script-line:hover .add-btn{display:flex}
+.add-btn:hover{opacity:1}
+.empty-state{padding:4rem 3rem;text-align:center}
+.empty-state-icon{font-size:32px;margin-bottom:1rem;opacity:0.4}
+.empty-state-text{font-size:15px;color:var(--ink4);font-style:italic;line-height:1.7}
+
+/* ─── NOTES PANEL ─── */
+.notes-panel{width:370px;flex-shrink:0;display:flex;flex-direction:column;background:var(--paper2)}
+.notes-head{padding:10px 16px;border-bottom:1px solid var(--paper4);background:var(--paper);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.notes-count{margin-left:auto;font-family:'DM Mono',monospace;font-size:10px;color:var(--ink5)}
+.search-bar{padding:8px 12px;border-bottom:1px solid var(--paper4);background:var(--paper);flex-shrink:0;position:relative}
+.search-icon{position:absolute;left:20px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--ink4);pointer-events:none}
+#search-input{width:100%;background:var(--linen);border:1px solid var(--paper4);padding:7px 28px 7px 30px;font-size:13px;color:var(--ink);font-family:'EB Garamond',serif;outline:none;transition:border-color 0.2s}
+#search-input:focus{border-color:var(--gold)}
+#search-input::placeholder{color:var(--ink5);font-style:italic}
+.search-clear{position:absolute;right:20px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:14px;color:var(--ink4);display:none;line-height:1;padding:2px}
+.search-clear:hover{color:var(--ink)}
+.search-result-count{font-family:'DM Mono',monospace;font-size:9px;color:var(--ink4);text-align:right;padding:2px 12px 0;min-height:14px}
+.type-tabs{display:flex;border-bottom:1px solid var(--paper4);overflow-x:auto;flex-shrink:0;background:var(--paper)}
+.type-tabs::-webkit-scrollbar{display:none}
+.tab-btn{display:flex;align-items:center;gap:5px;padding:8px 12px;border:none;background:transparent;font-size:11px;color:var(--ink4);cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:0.04em;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:all 0.15s;flex-shrink:0}
+.tab-btn:hover{color:var(--ink2)}
+.tab-btn.active{color:var(--ink);border-bottom-color:var(--ink)}
+.tab-btn.t-stage.active{color:var(--stage);border-bottom-color:var(--stage)}
+.tab-btn.t-light.active{color:var(--light);border-bottom-color:var(--light)}
+.tab-btn.t-image.active{color:var(--image);border-bottom-color:var(--image)}
+.tab-btn.t-music.active{color:var(--music);border-bottom-color:var(--music)}
+.tab-btn.t-dance.active{color:var(--dance);border-bottom-color:var(--dance)}
+.notes-body{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:10px}
+.notes-body::-webkit-scrollbar{width:4px}
+.notes-body::-webkit-scrollbar-thumb{background:var(--paper4)}
+
+/* ─── NOTE CARD ─── */
+.note-card{background:var(--paper);border:1px solid var(--paper4);box-shadow:0 2px 8px var(--shadow2),0 1px 0 var(--shadow2);padding:12px 14px;transition:box-shadow 0.15s,transform 0.15s;animation:cardIn 0.2s ease;position:relative}
+@keyframes cardIn{from{opacity:0;transform:translateY(-8px) scale(0.98)}to{opacity:1;transform:none}}
+.note-card:hover{box-shadow:0 6px 20px var(--shadow),0 1px 0 var(--shadow2);transform:translateY(-1px)}
+.note-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.note-card.t-stage::before{background:var(--stage)}
+.note-card.t-light::before{background:var(--light)}
+.note-card.t-image::before{background:var(--image)}
+.note-card.t-music::before{background:var(--music)}
+.note-card.t-dance::before{background:var(--dance)}
+.note-card.search-match{box-shadow:0 0 0 2px var(--gold),0 4px 16px var(--shadow)}
+.note-card.search-no-match{opacity:0.35}
+.note-card-head{display:flex;align-items:center;gap:7px;margin-bottom:9px}
+.note-tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.08em;padding:2px 7px;font-weight:500}
+.t-stage .note-tag{background:var(--stage-l);color:var(--stage)}
+.t-light .note-tag{background:var(--light-l);color:var(--light)}
+.t-image .note-tag{background:var(--image-l);color:var(--image)}
+.t-music .note-tag{background:var(--music-l);color:var(--music)}
+.t-dance .note-tag{background:var(--dance-l);color:var(--dance)}
+.note-lineref{font-family:'DM Mono',monospace;font-size:9px;color:var(--ink4);cursor:pointer;transition:color 0.15s}
+.note-lineref:hover{color:var(--gold)}
+.note-author-dot{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7px;font-family:'DM Mono',monospace;font-weight:500;color:#fff;margin-left:auto;flex-shrink:0}
+.note-actions{display:flex;gap:1px;opacity:0;transition:opacity 0.15s}
+.note-card:hover .note-actions{opacity:1}
+.nact{background:none;border:none;cursor:pointer;padding:3px 6px;font-size:11px;color:var(--ink4);font-family:'DM Mono',monospace;transition:color 0.1s}
+.nact:hover{color:var(--ink)}
+.nact.del:hover{color:var(--stage)}
+.note-body{font-size:14px;line-height:1.65;color:var(--ink2);font-family:'EB Garamond',serif}
+.note-body mark{background:rgba(184,149,42,0.3);color:var(--ink);font-style:normal}
+.note-src{font-size:11px;color:var(--ink4);font-style:italic;margin-top:7px;padding-top:7px;border-top:1px solid var(--paper3);line-height:1.4;font-family:'EB Garamond',serif}
+.note-footer{display:flex;align-items:center;gap:8px;margin-top:8px}
+.note-ts{font-family:'DM Mono',monospace;font-size:9px;color:var(--ink5)}
+.note-edited{font-size:9px;color:var(--ink5);font-style:italic;font-family:'DM Mono',monospace}
+.note-edit{display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--paper3)}
+.edit-types{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
+.et-btn{padding:3px 8px;border:1px solid var(--paper4);background:transparent;font-size:10px;color:var(--ink4);cursor:pointer;font-family:'DM Mono',monospace;transition:all 0.12s}
+.et-btn.s-stage{background:var(--stage-l);border-color:var(--stage);color:var(--stage)}
+.et-btn.s-light{background:var(--light-l);border-color:var(--light);color:var(--light)}
+.et-btn.s-image{background:var(--image-l);border-color:var(--image);color:var(--image)}
+.et-btn.s-music{background:var(--music-l);border-color:var(--music);color:var(--music)}
+.et-btn.s-dance{background:var(--dance-l);border-color:var(--dance);color:var(--dance)}
+.edit-textarea{width:100%;height:72px;background:var(--linen);border:1px solid var(--paper4);padding:8px 10px;font-size:13px;color:var(--ink);font-family:'EB Garamond',serif;resize:none;outline:none;line-height:1.6}
+.edit-textarea:focus{border-color:var(--gold)}
+.edit-btns{display:flex;gap:6px;margin-top:7px}
+.eb{flex:1;padding:6px;border:1px solid var(--paper4);background:var(--paper2);font-size:10px;color:var(--ink3);cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:0.04em;transition:all 0.12s}
+.eb:hover{border-color:var(--ink4)}
+.eb.save{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.eb.save:hover{background:var(--ink2)}
+
+/* ─── ADD MODAL ─── */
+#add-modal{position:fixed;inset:0;background:rgba(26,23,20,0.65);display:none;align-items:center;justify-content:center;z-index:300;backdrop-filter:blur(3px)}
+.modal-inner{width:440px;background:var(--paper);border:1px solid var(--paper4);box-shadow:0 32px 80px rgba(0,0,0,0.4);padding:2rem}
+.modal-inner::before{content:'';display:block;height:2px;margin:-2rem -2rem 1.5rem;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.modal-title{font-family:'Playfair Display',serif;font-size:18px;color:var(--ink);margin-bottom:1rem}
+.modal-ref{background:var(--paper2);border-left:3px solid var(--gold);padding:8px 12px;font-size:13px;color:var(--ink3);font-style:italic;font-family:'EB Garamond',serif;margin-bottom:1.25rem;line-height:1.5}
+.modal-types{display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap}
+.mtype-btn{flex:1;padding:9px 6px;border:1px solid var(--paper4);background:var(--paper2);font-size:11px;color:var(--ink4);cursor:pointer;font-family:'DM Mono',monospace;text-align:center;transition:all 0.12s;min-width:60px;letter-spacing:0.03em}
+.mtype-btn.s-stage{background:var(--stage-l);border-color:var(--stage);color:var(--stage)}
+.mtype-btn.s-light{background:var(--light-l);border-color:var(--light);color:var(--light)}
+.mtype-btn.s-image{background:var(--image-l);border-color:var(--image);color:var(--image)}
+.mtype-btn.s-music{background:var(--music-l);border-color:var(--music);color:var(--music)}
+.mtype-btn.s-dance{background:var(--dance-l);border-color:var(--dance);color:var(--dance)}
+#note-input{width:100%;height:96px;background:var(--linen);border:1px solid var(--paper4);padding:10px 12px;font-size:15px;color:var(--ink);font-family:'EB Garamond',serif;resize:none;outline:none;line-height:1.7}
+#note-input:focus{border-color:var(--gold)}
+.modal-btns{display:flex;gap:8px;margin-top:1rem}
+.m-btn{flex:1;padding:10px;border:1px solid var(--paper4);background:var(--paper2);font-size:11px;color:var(--ink3);cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:0.06em;transition:all 0.15s}
+.m-btn:hover{border-color:var(--ink4);color:var(--ink)}
+.m-btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.m-btn.primary:hover{background:var(--ink2)}
+.modal-hint{font-size:10px;color:var(--ink5);font-family:'DM Mono',monospace;margin-top:8px;text-align:right;letter-spacing:0.04em}
+
+/* ─── EXPORT MODAL ─── */
+#export-modal{position:fixed;inset:0;background:rgba(26,23,20,0.65);display:none;align-items:center;justify-content:center;z-index:300;backdrop-filter:blur(3px)}
+.export-box{width:480px;background:var(--paper);border:1px solid var(--paper4);box-shadow:0 32px 80px rgba(0,0,0,0.4);padding:2rem}
+.export-box::before{content:'';display:block;height:2px;margin:-2rem -2rem 1.5rem;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.export-title{font-family:'Playfair Display',serif;font-size:18px;color:var(--ink);margin-bottom:0.5rem}
+.export-sub{font-size:13px;color:var(--ink3);font-style:italic;margin-bottom:1.5rem}
+.export-opts{display:flex;gap:10px;margin-bottom:1.5rem}
+.export-opt{flex:1;padding:14px 10px;border:1px solid var(--paper4);background:var(--paper2);cursor:pointer;text-align:center;transition:all 0.15s}
+.export-opt:hover{border-color:var(--gold);background:var(--paper)}
+.export-opt.selected{border-color:var(--gold);background:var(--linen)}
+.export-opt-icon{font-size:22px;display:block;margin-bottom:6px}
+.export-opt-label{font-family:'DM Mono',monospace;font-size:11px;color:var(--ink);letter-spacing:0.06em}
+.export-opt-desc{font-size:11px;color:var(--ink4);margin-top:3px;font-style:italic}
+.export-preview{background:var(--linen);border:1px solid var(--paper4);padding:12px;font-family:'DM Mono',monospace;font-size:11px;color:var(--ink3);line-height:1.7;height:120px;overflow-y:auto;margin-bottom:1.25rem;white-space:pre-wrap}
+.export-btns{display:flex;gap:8px}
+.no-notes{text-align:center;padding:3rem 1rem;font-size:14px;color:var(--ink4);font-style:italic;font-family:'EB Garamond',serif;line-height:1.8}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-stage"></div>
+  <div class="login-lines"></div>
+  <div class="login-box">
+    <div class="login-mark">
+      <span class="login-mark-icon">🎭</span>
+      <span class="login-title">劇本檢閱系統</span>
+      <span class="login-sub">Script Review Studio</span>
+    </div>
+    <div class="field"><label class="field-label">房間代碼</label><input type="text" id="room-input" placeholder="輸入房間代碼" autocomplete="off"></div>
+    <div class="field"><label class="field-label">暱稱</label><input type="text" id="nick-input" placeholder="你的名字" autocomplete="off"></div>
+    <div class="field"><label class="field-label">密碼</label><input type="password" id="pass-input" placeholder="••••••••"></div>
+    <button class="btn-enter" id="btn-join">進入排練室</button>
+    <div class="login-err" id="login-err"></div>
+    <div class="login-divider">多人即時協作 · Firebase 驅動</div>
+  </div>
+</div>
+
+<!-- CONFIG -->
+<div id="config-screen">
+  <div class="config-box">
+    <div class="config-title">Firebase 設定</div>
+    <div class="config-sub">貼入你的 Firebase 專案設定（JSON 格式）</div>
+    <textarea class="firebase-cfg" id="firebase-cfg-input" placeholder='{
+  "apiKey": "...",
+  "authDomain": "...",
+  "databaseURL": "...",
+  "projectId": "...",
+  "storageBucket": "...",
+  "messagingSenderId": "...",
+  "appId": "..."
+}'></textarea>
+    <div class="config-row">
+      <button class="btn-cfg" id="btn-skip">Demo 模式（無需 Firebase）</button>
+      <button class="btn-cfg primary" id="btn-connect">連線 Firebase</button>
+    </div>
+    <div class="login-err" id="cfg-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-logo">
+      <span class="topbar-logo-icon">🎭</span>
+      <span class="topbar-logo-text">劇本檢閱</span>
+    </div>
+    <div class="topbar-sep"></div>
+    <div class="room-pill"><div class="room-pill-dot"></div><span id="room-label">—</span></div>
+    <div class="topbar-right">
+      <button class="btn-export" id="btn-export-open">↓ 匯出備注</button>
+      <div class="topbar-sep"></div>
+      <div class="online-wrap">
+        <span class="online-label">在線</span>
+        <div class="avatars" id="avatars"></div>
+      </div>
+      <div class="sync-badge">
+        <div class="sync-pip" id="sync-pip"></div>
+        <span id="sync-txt">同步中</span>
+      </div>
+    </div>
+  </div>
+  <div class="main">
+    <div class="script-panel">
+      <div class="panel-head">
+        <span class="panel-label">劇本</span>
+        <span class="script-count" id="line-count"></span>
+        <button class="btn-edit-mode" id="btn-edit">編輯模式</button>
+      </div>
+      <div class="script-area">
+        <textarea id="script-edit" placeholder="在此貼入劇本內容…&#10;每一行將成為可標注的單位。"></textarea>
+        <div id="script-view">
+          <div class="empty-state">
+            <div class="empty-state-icon">📄</div>
+            <div class="empty-state-text">尚無劇本<br>點擊右上方「編輯模式」貼入內容</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notes-panel">
+      <div class="notes-head">
+        <span class="panel-label">備注</span>
+        <span class="notes-count" id="notes-count">0 則</span>
+      </div>
+      <div class="search-bar">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" placeholder="搜尋備注內容…">
+        <button class="search-clear" id="search-clear">×</button>
+      </div>
+      <div class="search-result-count" id="search-result-count"></div>
+      <div class="type-tabs">
+        <button class="tab-btn active" data-f="all">全部</button>
+        <button class="tab-btn t-stage" data-f="stage">🎭 舞台</button>
+        <button class="tab-btn t-light" data-f="light">💡 燈光</button>
+        <button class="tab-btn t-image" data-f="image">🎬 影像</button>
+        <button class="tab-btn t-music" data-f="music">🎵 音樂</button>
+        <button class="tab-btn t-dance" data-f="dance">💃 舞蹈</button>
+      </div>
+      <div class="notes-body" id="notes-body">
+        <div class="no-notes">尚無備注<br>點擊劇本行旁的 ＋ 新增</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD NOTE MODAL -->
+<div id="add-modal">
+  <div class="modal-inner">
+    <div class="modal-title">新增標注備注</div>
+    <div class="modal-ref" id="modal-ref"></div>
+    <div class="modal-types">
+      <button class="mtype-btn s-stage" data-t="stage" id="mt-stage">🎭 舞台</button>
+      <button class="mtype-btn" data-t="light" id="mt-light">💡 燈光</button>
+      <button class="mtype-btn" data-t="image" id="mt-image">🎬 影像</button>
+      <button class="mtype-btn" data-t="music" id="mt-music">🎵 音樂</button>
+      <button class="mtype-btn" data-t="dance" id="mt-dance">💃 舞蹈</button>
+    </div>
+    <textarea id="note-input" placeholder="輸入備注內容…"></textarea>
+    <div class="modal-btns">
+      <button class="m-btn" id="btn-cancel">取消</button>
+      <button class="m-btn primary" id="btn-save">儲存備注</button>
+    </div>
+    <div class="modal-hint">Ctrl + Enter 快速儲存</div>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div id="export-modal">
+  <div class="export-box">
+    <div class="export-title">匯出備注</div>
+    <div class="export-sub">選擇匯出格式，下載備注紀錄</div>
+    <div class="export-opts">
+      <div class="export-opt selected" data-fmt="txt">
+        <span class="export-opt-icon">📄</span>
+        <div class="export-opt-label">純文字</div>
+        <div class="export-opt-desc">.txt 格式</div>
+      </div>
+      <div class="export-opt" data-fmt="md">
+        <span class="export-opt-icon">📝</span>
+        <div class="export-opt-label">Markdown</div>
+        <div class="export-opt-desc">.md 格式</div>
+      </div>
+      <div class="export-opt" data-fmt="csv">
+        <span class="export-opt-icon">📊</span>
+        <div class="export-opt-label">試算表</div>
+        <div class="export-opt-desc">.csv 格式</div>
+      </div>
+    </div>
+    <div class="export-preview" id="export-preview"></div>
+    <div class="export-btns">
+      <button class="m-btn" id="btn-export-cancel">取消</button>
+      <button class="m-btn primary" id="btn-export-dl">下載檔案</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
+<script>
+const TYPES={stage:{l:'舞台',e:'🎭'},light:{l:'燈光',e:'💡'},image:{l:'影像',e:'🎬'},music:{l:'音樂',e:'🎵'},dance:{l:'舞蹈',e:'💃'}};
+const COLORS=['#8b6abf','#bf7a4a','#4a8abf','#6abf8b','#bf4a8a','#8abf4a','#bf8a4a','#4abfbf'];
+let S={room:'',nick:'',pass:'',editing:false,notes:{},script:'',filter:'all',query:'',selType:'stage',selIdx:null,selText:'',db:null,demo:false,myColor:null,exportFmt:'txt'};
+const $=id=>document.getElementById(id);
+
+$('btn-join').onclick=()=>{
+  const r=$('room-input').value.trim(),n=$('nick-input').value.trim(),p=$('pass-input').value;
+  $('login-err').textContent='';
+  if(!r)return $('login-err').textContent='請輸入房間代碼';
+  if(!n)return $('login-err').textContent='請輸入暱稱';
+  if(!p)return $('login-err').textContent='請輸入密碼';
+  S.room=r;S.nick=n;S.pass=p;
+  S.myColor=COLORS[Math.abs(n.split('').reduce((a,c)=>a+c.charCodeAt(0),0))%COLORS.length];
+  $('login-screen').style.display='none';$('config-screen').style.display='flex';
+};
+$('pass-input').onkeydown=e=>{if(e.key==='Enter')$('btn-join').click()};
+
+$('btn-connect').onclick=()=>{
+  let cfg;$('cfg-err').textContent='';
+  try{cfg=JSON.parse($('firebase-cfg-input').value.trim())}catch{$('cfg-err').textContent='JSON 格式錯誤';return}
+  if(!cfg.databaseURL){$('cfg-err').textContent='缺少 databaseURL';return}
+  try{if(!firebase.apps.length)firebase.initializeApp(cfg);S.db=firebase.database();S.demo=false;launch()}
+  catch(e){$('cfg-err').textContent='連線失敗：'+e.message}
+};
+$('btn-skip').onclick=()=>{S.demo=true;launch()};
+
+function launch(){
+  $('config-screen').style.display='none';
+  const app=$('app');app.style.display='flex';app.style.flexDirection='column';
+  $('room-label').textContent=S.room;
+  if(S.demo){$('sync-pip').classList.add('off');$('sync-txt').textContent='Demo';renderAvatars([{nick:S.nick,color:S.myColor}])}
+  else connectFB();
+}
+
+function connectFB(){
+  const base='rooms/'+S.room;
+  S.db.ref(base+'/password').once('value',snap=>{
+    const stored=snap.val();
+    if(stored===null)S.db.ref(base+'/password').set(S.pass);
+    else if(stored!==S.pass){$('app').style.display='none';$('login-screen').style.display='flex';$('login-err').textContent='密碼錯誤';return}
+    const uRef=S.db.ref(base+'/users/'+S.nick);
+    uRef.set({nick:S.nick,color:S.myColor,ts:Date.now()});uRef.onDisconnect().remove();
+    S.db.ref(base+'/users').on('value',s=>renderAvatars(Object.values(s.val()||{})));
+    S.db.ref(base+'/script').on('value',s=>{const v=s.val()||'';if(v!==S.script){S.script=v;if(!S.editing)renderScript(v);else $('script-edit').value=v}});
+    S.db.ref(base+'/notes').on('value',s=>{S.notes=s.val()||{};renderNotes();renderScript(S.script)});
+  });
+}
+
+function dbSet(p,v){if(!S.demo)S.db.ref('rooms/'+S.room+'/'+p).set(v)}
+function dbPush(p,v){if(S.demo){const k='d_'+Date.now()+'_'+Math.random().toString(36).slice(2,5);S.notes[k]=v;renderNotes();renderScript(S.script);return}S.db.ref('rooms/'+S.room+'/'+p).push(v)}
+function dbUpd(p,v){if(S.demo){const k=p.split('/').pop();if(S.notes[k])Object.assign(S.notes[k],v),renderNotes(),renderScript(S.script);return}S.db.ref('rooms/'+S.room+'/'+p).update(v)}
+function dbDel(k){if(S.demo){delete S.notes[k];renderNotes();renderScript(S.script);return}S.db.ref('rooms/'+S.room+'/notes/'+k).remove()}
+
+function renderAvatars(users){
+  const el=$('avatars');el.innerHTML='';
+  users.slice(0,7).forEach(u=>{const d=document.createElement('div');d.className='avatar';d.style.background=u.color||'#888';d.title=u.nick;d.textContent=(u.nick||'?').slice(0,2).toUpperCase();el.appendChild(d)});
+}
+
+$('btn-edit').onclick=()=>{
+  S.editing=!S.editing;const btn=$('btn-edit');
+  if(S.editing){btn.textContent='完成編輯';btn.classList.add('active');$('script-edit').style.display='block';$('script-view').style.display='none';$('script-edit').value=S.script;$('script-edit').focus()}
+  else{btn.textContent='編輯模式';btn.classList.remove('active');$('script-edit').style.display='none';$('script-view').style.display='block';S.script=$('script-edit').value;renderScript(S.script);dbSet('script',S.script)}
+};
+
+function renderScript(text){
+  const view=$('script-view');view.innerHTML='';
+  if(!text.trim()){view.innerHTML='<div class="empty-state"><div class="empty-state-icon">📄</div><div class="empty-state-text">尚無劇本<br>點擊右上方「編輯模式」貼入內容</div></div>';$('line-count').textContent='';return}
+  const byLine={};
+  Object.values(S.notes).forEach(n=>{if(!byLine[n.lineIdx])byLine[n.lineIdx]=[];byLine[n.lineIdx].push(n)});
+  const lines=text.split('\n');
+  $('line-count').textContent=lines.length+' 行';
+  lines.forEach((line,i)=>{
+    const row=document.createElement('div');
+    row.className='script-line'+(byLine[i]?' has-note':'');
+    row.dataset.lineIdx=i;
+    row.innerHTML=`<span class="line-num">${i+1}</span><span class="line-text">${esc(line)||'&nbsp;'}</span>`;
+    const btn=document.createElement('button');btn.className='add-btn';btn.innerHTML='+';btn.title='新增備注';
+    btn.onclick=e=>{e.stopPropagation();openModal(i,line)};
+    row.appendChild(btn);view.appendChild(row);
+  });
+}
+
+function scrollToLine(idx){
+  document.querySelectorAll('.script-line').forEach(r=>r.classList.remove('hl'));
+  const t=document.querySelector('.script-line[data-line-idx="'+idx+'"]');
+  if(t){t.classList.add('hl');t.scrollIntoView({behavior:'smooth',block:'center'})}
+}
+
+$('search-input').oninput=function(){S.query=this.value.trim();$('search-clear').style.display=S.query?'block':'none';renderNotes()};
+$('search-clear').onclick=()=>{$('search-input').value='';S.query='';$('search-clear').style.display='none';renderNotes()};
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.onclick=()=>{S.filter=btn.dataset.f;document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderNotes()};
+});
+
+function openModal(idx,text){
+  S.selIdx=idx;S.selText=text;
+  $('modal-ref').textContent='第 '+(idx+1)+' 行：'+(text.slice(0,65)||'（空行）');
+  $('note-input').value='';setMType(S.selType);
+  $('add-modal').style.display='flex';setTimeout(()=>$('note-input').focus(),60);
+}
+Object.keys(TYPES).forEach(t=>$('mt-'+t).onclick=()=>setMType(t));
+function setMType(t){S.selType=t;Object.keys(TYPES).forEach(x=>{$('mt-'+x).className='mtype-btn'+(x===t?' s-'+x:'')})}
+$('btn-cancel').onclick=()=>$('add-modal').style.display='none';
+$('add-modal').onclick=e=>{if(e.target===$('add-modal'))$('add-modal').style.display='none'};
+$('btn-save').onclick=saveNote;
+$('note-input').onkeydown=e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))saveNote()};
+function saveNote(){const txt=$('note-input').value.trim();if(!txt)return;dbPush('notes',{lineIdx:S.selIdx,lineText:S.selText,type:S.selType,text:txt,author:S.nick,color:S.myColor,ts:Date.now()});$('add-modal').style.display='none'}
+
+$('btn-export-open').onclick=()=>{updateExportPreview();$('export-modal').style.display='flex'};
+$('btn-export-cancel').onclick=()=>$('export-modal').style.display='none';
+$('export-modal').onclick=e=>{if(e.target===$('export-modal'))$('export-modal').style.display='none'};
+document.querySelectorAll('.export-opt').forEach(opt=>{
+  opt.onclick=()=>{document.querySelectorAll('.export-opt').forEach(o=>o.classList.remove('selected'));opt.classList.add('selected');S.exportFmt=opt.dataset.fmt;updateExportPreview()};
+});
+
+function getSorted(){return Object.values(S.notes).sort((a,b)=>(a.lineIdx-b.lineIdx)||(a.ts-b.ts))}
+function buildExport(fmt){
+  const notes=getSorted();
+  if(!notes.length)return fmt==='csv'?'行號,類型,內容,對應台詞,作者,時間\n':'（無備注）';
+  const ts=n=>n.ts?new Date(n.ts).toLocaleString('zh-Hant'):'';
+  const tl=n=>(TYPES[n.type]||{l:n.type}).l;
+  if(fmt==='csv'){
+    const rows=[['行號','類型','備注內容','對應台詞','作者','時間']];
+    notes.forEach(n=>rows.push([n.lineIdx+1,tl(n),n.text,n.lineText||'',n.author||'',ts(n)]));
+    return rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  }
+  if(fmt==='md'){
+    let out=`# 劇本備注匯出\n\n房間：${S.room}　匯出時間：${new Date().toLocaleString('zh-Hant')}\n\n`;
+    Object.keys(TYPES).forEach(tp=>{
+      const grp=notes.filter(n=>n.type===tp);if(!grp.length)return;
+      const T=TYPES[tp];out+=`## ${T.e} ${T.l}\n\n`;
+      grp.forEach(n=>{out+=`**第 ${n.lineIdx+1} 行**　${ts(n)}　*${n.author||'匿名'}*\n\n> ${n.lineText||''}\n\n${n.text}\n\n---\n\n`});
+    });
+    return out;
+  }
+  let out=`劇本備注匯出\n房間：${S.room}\n匯出時間：${new Date().toLocaleString('zh-Hant')}\n${'═'.repeat(40)}\n\n`;
+  notes.forEach(n=>{
+    out+=`【第 ${n.lineIdx+1} 行】${tl(n)} ─ ${n.author||'匿名'} ${ts(n)}\n`;
+    if(n.lineText)out+=`  台詞：${n.lineText}\n`;
+    out+=`  備注：${n.text}\n\n`;
+  });
+  return out;
+}
+function updateExportPreview(){$('export-preview').textContent=buildExport(S.exportFmt)}
+$('btn-export-dl').onclick=()=>{
+  const fmt=S.exportFmt,content=buildExport(fmt);
+  const ext={txt:'txt',md:'md',csv:'csv'}[fmt];
+  const mime={txt:'text/plain',md:'text/markdown',csv:'text/csv'}[fmt];
+  const blob=new Blob(['\uFEFF'+content],{type:mime+';charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;
+  a.download=`劇本備注_${S.room}_${new Date().toLocaleDateString('zh-Hant').replace(/\//g,'-')}.${ext}`;
+  a.click();URL.revokeObjectURL(url);
+  $('export-modal').style.display='none';
+};
+
+function hlText(text,q){
+  if(!q)return esc(text);
+  const re=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
+  return esc(text).replace(re,'<mark>$1</mark>');
+}
+
+function renderNotes(){
+  const q=S.query.toLowerCase();
+  const arr=Object.entries(S.notes).map(([k,v])=>({...v,key:k})).filter(n=>S.filter==='all'||n.type===S.filter).sort((a,b)=>(a.lineIdx-b.lineIdx)||(a.ts-b.ts));
+  $('notes-count').textContent=Object.keys(S.notes).length+' 則';
+  const matched=q?arr.filter(n=>(n.text||'').toLowerCase().includes(q)||(n.lineText||'').toLowerCase().includes(q)||(n.author||'').toLowerCase().includes(q)):arr;
+  $('search-result-count').textContent=q?'找到 '+matched.length+' 筆結果':'';
+  const body=$('notes-body');body.innerHTML='';
+  if(!arr.length){body.innerHTML='<div class="no-notes">'+(S.filter==='all'?'尚無備注<br>點擊劇本行旁的 ＋ 新增':'此類型暫無備注')+'</div>';return}
+  arr.forEach(note=>{
+    const t=TYPES[note.type]||{l:note.type,e:''};
+    const ts=note.ts?new Date(note.ts).toLocaleTimeString('zh-Hant',{hour:'2-digit',minute:'2-digit'}):'';
+    const isMatch=!q||(note.text||'').toLowerCase().includes(q)||(note.lineText||'').toLowerCase().includes(q)||(note.author||'').toLowerCase().includes(q);
+    const card=document.createElement('div');
+    card.className='note-card t-'+note.type+(q&&isMatch?' search-match':q&&!isMatch?' search-no-match':'');
+    card.innerHTML=`
+      <div class="note-card-head">
+        <span class="note-tag">${t.e} ${t.l}</span>
+        <span class="note-lineref" title="點擊定位到劇本行">第 ${(note.lineIdx||0)+1} 行</span>
+        <div class="note-author-dot" style="background:${note.color||'#888'}" title="${esc(note.author||'')}">
+          ${(note.author||'?').slice(0,2).toUpperCase()}
+        </div>
+        <div class="note-actions">
+          <button class="nact edit-btn" title="編輯">✎</button>
+          <button class="nact del del-btn" title="刪除">×</button>
+        </div>
+      </div>
+      <div class="note-body disp-text">${q&&isMatch?hlText(note.text,S.query):esc(note.text)}</div>
+      ${note.lineText?`<div class="note-src">${esc(note.lineText.slice(0,60))}${note.lineText.length>60?'…':''}</div>`:''}
+      <div class="note-footer">
+        <span class="note-ts">${ts}</span>
+        ${note.editedTs?'<span class="note-edited">已編輯</span>':''}
+      </div>
+      <div class="note-edit">
+        <div class="edit-types">
+          ${Object.entries(TYPES).map(([k,v])=>`<button class="et-btn${k===note.type?' s-'+k:''}" data-t="${k}">${v.e} ${v.l}</button>`).join('')}
+        </div>
+        <textarea class="edit-textarea">${esc(note.text)}</textarea>
+        <div class="edit-btns">
+          <button class="eb cancel-btn">取消</button>
+          <button class="eb save save-btn">儲存</button>
+        </div>
+      </div>`;
+    card.querySelector('.note-lineref').onclick=()=>scrollToLine(note.lineIdx);
+    card.onmouseenter=()=>{document.querySelectorAll('.script-line').forEach(r=>r.classList.remove('hl'));const t=document.querySelector('.script-line[data-line-idx="'+note.lineIdx+'"]');if(t)t.classList.add('hl')};
+    card.onmouseleave=()=>document.querySelectorAll('.script-line').forEach(r=>r.classList.remove('hl'));
+    let eType=note.type;
+    const editArea=card.querySelector('.note-edit'),dispText=card.querySelector('.disp-text'),etArea=card.querySelector('.edit-textarea');
+    card.querySelector('.edit-btn').onclick=()=>{const open=editArea.style.display==='block';editArea.style.display=open?'none':'block';dispText.style.display=open?'block':'none';if(!open){etArea.value=note.text;eType=note.type;setTimeout(()=>etArea.focus(),40)}};
+    card.querySelector('.cancel-btn').onclick=()=>{editArea.style.display='none';dispText.style.display='block'};
+    card.querySelectorAll('.et-btn').forEach(b=>{b.onclick=()=>{eType=b.dataset.t;card.querySelectorAll('.et-btn').forEach(x=>x.className='et-btn'+(x.dataset.t===eType?' s-'+eType:''))}});
+    card.querySelector('.save-btn').onclick=()=>{const txt=etArea.value.trim();if(!txt)return;dbUpd('notes/'+note.key,{text:txt,type:eType,editedTs:Date.now()});if(S.demo){editArea.style.display='none';dispText.style.display='block'}};
+    card.querySelector('.del-btn').onclick=()=>dbDel(note.key);
+    body.appendChild(card);
+  });
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+renderNotes();
+</script>
+</body>
+</html>
