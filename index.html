@@ -1014,19 +1014,20 @@ function renderNotes(){
 function positionCards(){
   const view=$('script-view'),body=$('notes-body'),spacer=$('notes-spacer');
   if(!view||!body||!spacer)return;
-  // spacer 撐開 notes-body 使其高度與 script-view 一致
   spacer.style.height=view.scrollHeight+'px';
-  // 依行號分組，依序定位
+  const viewRect=view.getBoundingClientRect();
   const byLine={};
   body.querySelectorAll('.note-card[data-line-idx]').forEach(card=>{
     const idx=parseInt(card.dataset.lineIdx);
     if(!byLine[idx])byLine[idx]=[];
     byLine[idx].push(card);
   });
-  Object.entries(byLine).sort((a,b)=>a[0]-b[0]).forEach(([idx,cards])=>{
+  Object.entries(byLine).sort((a,b)=>+a[0]-+b[0]).forEach(([idx,cards])=>{
     const lineEl=view.querySelector('.script-line[data-line-idx="'+idx+'"]');
     if(!lineEl)return;
-    let top=lineEl.offsetTop;
+    // 用 getBoundingClientRect 取得相對於 view 的實際位置，再加上 scrollTop 轉為捲動內容座標
+    const lineRect=lineEl.getBoundingClientRect();
+    let top=lineRect.top-viewRect.top+view.scrollTop;
     cards.forEach(card=>{
       card.style.top=top+'px';
       top+=card.offsetHeight+8;
