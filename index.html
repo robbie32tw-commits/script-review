@@ -286,6 +286,13 @@ html,body{height:100%;background:var(--paper3);color:var(--ink);font-family:'EB 
 .vc-sep{width:1px;height:14px;background:var(--paper4);margin:0 3px}
 .panel-head .btn-edit-mode{margin-left:8px}
 
+/* ─── SELECTION POPUP ─── */
+#sel-popup{position:fixed;display:none;z-index:250;background:var(--ink);border-radius:3px;box-shadow:0 4px 16px rgba(0,0,0,0.35);transform:translateX(-50%)}
+#sel-popup::after{content:'';position:absolute;left:50%;top:100%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--ink)}
+.sel-popup-btn{display:flex;align-items:center;gap:5px;padding:6px 12px;background:none;border:none;color:var(--paper);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;white-space:nowrap;letter-spacing:0.04em}
+.sel-popup-btn:hover{opacity:0.8}
+.word-hl{background:rgba(184,149,42,0.25);border-bottom:1.5px solid var(--gold);border-radius:1px}
+
 /* ─── SEARCH SCOPE TOGGLE ─── */
 .search-scope{display:flex;margin-left:4px;border:1px solid var(--paper4);overflow:hidden;flex-shrink:0}
 .scope-btn{background:transparent;border:none;padding:3px 8px;font-size:10px;color:var(--ink4);cursor:pointer;font-family:'DM Mono',monospace;transition:all 0.12s;white-space:nowrap}
@@ -430,6 +437,7 @@ html,body{height:100%;background:var(--paper3);color:var(--ink);font-family:'EB 
 </div>
 
 <div class="copy-toast" id="copy-toast">已複製房間代碼</div>
+<div id="sel-popup"><button class="sel-popup-btn" id="sel-popup-btn">＋ 標注選取文字</button></div>
 
 <!-- ADD NOTE MODAL -->
 <div id="add-modal">
@@ -755,6 +763,42 @@ function scrollToLine(idx){
   if(t){t.classList.add('hl');t.scrollIntoView({behavior:'smooth',block:'center'})}
 }
 
+// ── WORD-LEVEL SELECTION POPUP ──
+let _selLineIdx=null,_selWord='';
+function hideSelPopup(){$('sel-popup').style.display='none';_selLineIdx=null;_selWord=''}
+
+$('script-view').addEventListener('mouseup',()=>{
+  setTimeout(()=>{
+    const sel=window.getSelection();
+    if(!sel||sel.isCollapsed||!sel.toString().trim()){hideSelPopup();return}
+    const word=sel.toString().trim();
+    // 找到所在的 script-line
+    const anchor=sel.anchorNode;
+    const row=anchor?.parentElement?.closest?.('.script-line');
+    if(!row){hideSelPopup();return}
+    const idx=parseInt(row.dataset.lineIdx,10);
+    _selLineIdx=idx;_selWord=word;
+    // 定位 popup 到選取範圍上方
+    const rect=sel.getRangeAt(0).getBoundingClientRect();
+    const pop=$('sel-popup');
+    pop.style.display='block';
+    pop.style.left=(rect.left+rect.right)/2+'px';
+    pop.style.top=(rect.top+window.scrollY-48)+'px';
+  },10);
+});
+
+$('sel-popup-btn').onclick=()=>{
+  if(_selLineIdx===null)return;
+  const lines=S.script.split('\n');
+  openModal(_selLineIdx,_selWord,lines[_selLineIdx]||'');
+  hideSelPopup();window.getSelection()?.removeAllRanges();
+};
+
+document.addEventListener('mousedown',e=>{
+  if(!$('sel-popup').contains(e.target))hideSelPopup();
+});
+$('script-view').addEventListener('scroll',hideSelPopup,{passive:true});
+
 S.searchScope='notes';
 $('scope-notes').onclick=()=>{S.searchScope='notes';$('scope-notes').classList.add('active');$('scope-script').classList.remove('active');$('search-input').placeholder='搜尋備注內容…';clearScriptHL();if(S.query)renderNotes()};
 $('scope-script').onclick=()=>{S.searchScope='script';$('scope-script').classList.add('active');$('scope-notes').classList.remove('active');$('search-input').placeholder='搜尋劇本台詞…';if(S.query)searchScript(S.query);else clearScriptHL()};
@@ -797,9 +841,16 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.onclick=()=>{S.filter=btn.dataset.f;document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderNotes()};
 });
 
-function openModal(idx,text){
-  S.selIdx=idx;S.selText=text;
-  $('modal-ref').textContent='第 '+(idx+1)+' 行：'+(text.slice(0,65)||'（空行）');
+function openModal(idx,text,fullLine){
+  S.selIdx=idx;
+  // text = 選取字詞（或整行）；fullLine = 整行（僅字詞模式下有值，用於匯出上下文）
+  S.selText=text;
+  S.selFullLine=fullLine||null;
+  const isWord=!!fullLine;
+  const ref=isWord
+    ?'第 '+(idx+1)+' 行 ｜ 「'+text.slice(0,30)+(text.length>30?'…':'')+'」'
+    :'第 '+(idx+1)+' 行：'+(text.slice(0,65)||'（空行）');
+  $('modal-ref').textContent=ref;
   $('note-input').value='';setMType(S.selType);
   $('add-modal').style.display='flex';setTimeout(()=>$('note-input').focus(),60);
 }
@@ -809,7 +860,13 @@ $('btn-cancel').onclick=()=>$('add-modal').style.display='none';
 $('add-modal').onclick=e=>{if(e.target===$('add-modal'))$('add-modal').style.display='none'};
 $('btn-save').onclick=saveNote;
 $('note-input').onkeydown=e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))saveNote()};
-function saveNote(){const txt=$('note-input').value.trim();if(!txt)return;dbPush('notes',{lineIdx:S.selIdx,lineText:S.selText,type:S.selType,text:txt,author:S.nick,color:S.myColor,ts:Date.now()});$('add-modal').style.display='none'}
+function saveNote(){
+  const txt=$('note-input').value.trim();if(!txt)return;
+  const data={lineIdx:S.selIdx,lineText:S.selText,type:S.selType,text:txt,author:S.nick,color:S.myColor,ts:Date.now()};
+  if(S.selFullLine)data.fullLine=S.selFullLine;
+  dbPush('notes',data);
+  $('add-modal').style.display='none';
+}
 
 $('btn-export-open').onclick=()=>{updateExportPreview();$('export-modal').style.display='flex'};
 $('btn-export-cancel').onclick=()=>$('export-modal').style.display='none';
