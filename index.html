@@ -318,7 +318,7 @@ html,body{height:100%;background:var(--paper3);color:var(--ink);font-family:'EB 
     <button class="btn-enter" id="btn-join">進入排練室</button>
     <div class="login-err" id="login-err"></div>
     <div class="login-divider">多人即時協作 · Co-wrote the Script</div>
-    <div class="login-version">v2026.04.06 · Made by I-Hung</div>
+    <div class="login-version">v2026.04.07 · Made by I-Hung</div>
   </div>
 </div>
 
@@ -776,6 +776,19 @@ function renderScript(text){
 }
 
 function scrollToLine(idx){
+  if(S.editing){
+    // 編輯模式：捲動 textarea 到對應行
+    const ta=$('script-edit');
+    const lines=ta.value.split('\n');
+    let charOffset=0;
+    for(let i=0;i<Math.min(idx,lines.length);i++)charOffset+=lines[i].length+1;
+    ta.focus();
+    ta.setSelectionRange(charOffset,charOffset+(lines[idx]||'').length);
+    // 計算捲動位置（lineHeight 均一，用比例估算）
+    const lineH=ta.scrollHeight/Math.max(lines.length,1);
+    ta.scrollTop=Math.max(0,lineH*idx-ta.clientHeight/2);
+    return;
+  }
   document.querySelectorAll('.script-line').forEach(r=>r.classList.remove('hl'));
   const t=document.querySelector('.script-line[data-line-idx="'+idx+'"]');
   if(t){t.classList.add('hl');t.scrollIntoView({behavior:'smooth',block:'center'})}
