@@ -1035,7 +1035,7 @@ function positionCards(){
   const view=$('script-view'),body=$('notes-body'),spacer=$('notes-spacer');
   if(!view||!body||!spacer)return;
   spacer.style.height=view.scrollHeight+'px';
-  const viewRect=view.getBoundingClientRect();
+  const bodyRect=body.getBoundingClientRect();
   const GAP=6;
 
   // 收集所有卡片及其理想錨點位置
@@ -1045,7 +1045,7 @@ function positionCards(){
     const lineEl=view.querySelector('.script-line[data-line-idx="'+idx+'"]');
     if(!lineEl)return;
     const lineRect=lineEl.getBoundingClientRect();
-    const idealTop=lineRect.top-viewRect.top+view.scrollTop;
+    const idealTop=lineRect.top-bodyRect.top+body.scrollTop;
     const anchorCenter=idealTop+lineRect.height/2;
     items.push({card,idealTop,anchorCenter,h:card.offsetHeight||60});
   });
