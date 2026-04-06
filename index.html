@@ -157,6 +157,7 @@ html,body{height:100%;background:var(--paper3);color:var(--ink);font-family:'EB 
 @keyframes cardIn{from{opacity:0;transform:translateY(-8px) scale(0.98)}to{opacity:1;transform:none}}
 .note-card:hover{box-shadow:0 6px 20px var(--shadow),0 1px 0 var(--shadow2);transform:translateY(-1px)}
 .note-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.note-card::after{content:'';position:absolute;left:3px;width:18px;height:2px;background:var(--gold);opacity:0.7;top:var(--anchor-y,0);transform:translateY(-50%);pointer-events:none;border-radius:1px}
 .note-card.t-stage::before{background:var(--stage)}
 .note-card.t-light::before{background:var(--light)}
 .note-card.t-image::before{background:var(--image)}
@@ -603,15 +604,32 @@ function _stopEditingBroadcast(){
 $('btn-edit').onclick=()=>{
   S.editing=!S.editing;const btn=$('btn-edit');
   if(S.editing){
+    const view=$('script-view');
+    const savedScroll=view.scrollTop;
+    const viewScrollH=view.scrollHeight;
     btn.textContent='完成編輯';btn.classList.add('active');
-    $('script-edit').style.display='block';$('script-view').style.display='none';
-    $('fmt-toolbar').style.display='flex';$('script-edit').value=S.script;$('script-edit').focus();
+    $('script-edit').style.display='block';view.style.display='none';
+    $('fmt-toolbar').style.display='flex';$('script-edit').value=S.script;
+    requestAnimationFrame(()=>{
+      const ratio=viewScrollH>0?savedScroll/viewScrollH:0;
+      $('script-edit').scrollTop=ratio*$('script-edit').scrollHeight;
+      $('script-edit').focus();
+    });
     _startEditingBroadcast();
   } else {
+    const ta=$('script-edit');
+    const ratio=ta.scrollHeight>0?ta.scrollTop/ta.scrollHeight:0;
     btn.textContent='編輯模式';btn.classList.remove('active');
-    $('script-edit').style.display='none';$('script-view').style.display='block';
+    ta.style.display='none';$('script-view').style.display='block';
     $('fmt-toolbar').style.display='none';
-    S.script=$('script-edit').value;renderScript(S.script);dbSet('script',S.script);
+    S.script=ta.value;renderScript(S.script);dbSet('script',S.script);
+    remapNotes(S.script.split('\n'));
+    requestAnimationFrame(()=>{
+      const sv=$('script-view');
+      sv.scrollTop=ratio*sv.scrollHeight;
+      $('notes-body').scrollTop=sv.scrollTop;
+      requestAnimationFrame(positionCards);
+    });
     _stopEditingBroadcast();
   }
 };
@@ -862,7 +880,9 @@ $('btn-save').onclick=saveNote;
 $('note-input').onkeydown=e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))saveNote()};
 function saveNote(){
   const txt=$('note-input').value.trim();if(!txt)return;
-  const data={lineIdx:S.selIdx,lineText:S.selText,type:S.selType,text:txt,author:S.nick,color:S.myColor,ts:Date.now()};
+  // anchorLine：完整行文字，用於劇本更新後重新對應行號
+  const anchorLine=S.selFullLine!=null?S.selFullLine:S.selText;
+  const data={lineIdx:S.selIdx,lineText:S.selText,anchorLine,type:S.selType,text:txt,author:S.nick,color:S.myColor,ts:Date.now()};
   if(S.selFullLine)data.fullLine=S.selFullLine;
   dbPush('notes',data);
   $('add-modal').style.display='none';
@@ -1016,22 +1036,40 @@ function positionCards(){
   if(!view||!body||!spacer)return;
   spacer.style.height=view.scrollHeight+'px';
   const viewRect=view.getBoundingClientRect();
-  const byLine={};
+  const GAP=6;
+
+  // 收集所有卡片及其理想錨點位置
+  const items=[];
   body.querySelectorAll('.note-card[data-line-idx]').forEach(card=>{
     const idx=parseInt(card.dataset.lineIdx);
-    if(!byLine[idx])byLine[idx]=[];
-    byLine[idx].push(card);
-  });
-  Object.entries(byLine).sort((a,b)=>+a[0]-+b[0]).forEach(([idx,cards])=>{
     const lineEl=view.querySelector('.script-line[data-line-idx="'+idx+'"]');
     if(!lineEl)return;
-    // 用 getBoundingClientRect 取得相對於 view 的實際位置，再加上 scrollTop 轉為捲動內容座標
     const lineRect=lineEl.getBoundingClientRect();
-    let top=lineRect.top-viewRect.top+view.scrollTop;
-    cards.forEach(card=>{
-      card.style.top=top+'px';
-      top+=card.offsetHeight+8;
-    });
+    const idealTop=lineRect.top-viewRect.top+view.scrollTop;
+    const anchorCenter=idealTop+lineRect.height/2;
+    items.push({card,idealTop,anchorCenter,h:card.offsetHeight||60});
+  });
+
+  // 按錨點排序
+  items.sort((a,b)=>a.anchorCenter-b.anchorCenter);
+
+  // 由上往下推避：每張卡片不得與前一張重疊
+  for(let i=0;i<items.length;i++){
+    const cur=items[i];
+    cur.actualTop=cur.idealTop;
+    if(i>0){
+      const prev=items[i-1];
+      const minTop=prev.actualTop+prev.h+GAP;
+      if(cur.actualTop<minTop)cur.actualTop=minTop;
+    }
+  }
+
+  // 套用位置，並設定錨線位置（鎖定在卡片高度範圍內）
+  items.forEach(({card,actualTop,anchorCenter,h})=>{
+    card.style.top=actualTop+'px';
+    const anchorY=anchorCenter-actualTop;
+    // 夾在 [4, h-4] 之間，讓橫線始終在卡片內可見
+    card.style.setProperty('--anchor-y',Math.max(4,Math.min(anchorY,h-4))+'px');
   });
 }
 
@@ -1050,6 +1088,33 @@ $('notes-body').addEventListener('wheel',e=>{
 new ResizeObserver(()=>requestAnimationFrame(positionCards)).observe($('script-view'));
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// ── 備注行號重對應（劇本更新後）──
+function strSim(a,b){
+  // 字元集合重疊率，適合中文台詞比對
+  if(!a||!b)return 0;
+  a=a.trim();b=b.trim();
+  if(a===b)return 1;
+  const set=new Set([...a]);
+  let m=0;for(const c of b)if(set.has(c))m++;
+  return m/Math.max(a.length,b.length);
+}
+function remapNotes(newLines){
+  const entries=Object.entries(S.notes);
+  if(!entries.length)return;
+  entries.forEach(([key,note])=>{
+    if(!note.anchorLine)return; // 舊格式備注，略過
+    const anchor=note.anchorLine.trim();
+    let bestIdx=Math.min(note.lineIdx,newLines.length-1),bestScore=0;
+    newLines.forEach((line,i)=>{
+      const score=strSim(anchor,line);
+      if(score>bestScore){bestScore=score;bestIdx=i;}
+    });
+    // 相似度門檻 0.5：低於此視為被刪除，保留到最接近的合法行
+    const newIdx=bestScore>=0.5?bestIdx:Math.min(note.lineIdx,newLines.length-1);
+    if(newIdx!==note.lineIdx)dbUpd('notes/'+key,{lineIdx:newIdx});
+  });
+}
 
 // ── TAB INDENT ──
 $('script-edit').addEventListener('keydown',e=>{
